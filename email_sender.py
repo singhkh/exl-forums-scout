@@ -7,6 +7,8 @@ Sends email reports with scraped questions
 import os
 import logging
 import smtplib
+import random
+import hashlib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -14,7 +16,8 @@ from datetime import datetime
 class EmailSender:
     """Email sender class for the AEM Forms Question Scraper"""
     
-    def __init__(self, smtp_server=None, smtp_port=None, sender_email=None, sender_name=None, password=None, use_ssl=False):
+    def __init__(self, smtp_server=None, smtp_port=None, sender_email=None, sender_name=None, 
+                 display_from=None, password=None, use_ssl=False):
         """Initialize the email sender with SMTP settings."""
         self.smtp_server = smtp_server or os.environ.get("AEM_SMTP_SERVER")
         
@@ -28,6 +31,10 @@ class EmailSender:
             
         self.sender_email = sender_email or os.environ.get("AEM_SENDER_EMAIL")
         self.sender_name = sender_name or os.environ.get("AEM_SENDER_NAME", "AEM Forms Scraper")
+        
+        # Display From can be different from sender email (useful for corporate relays)
+        self.display_from = display_from or os.environ.get("AEM_DISPLAY_FROM", self.sender_email)
+        
         self.password = password or os.environ.get("AEM_EMAIL_PASSWORD")
         self.use_ssl = use_ssl or os.environ.get("AEM_USE_SSL", "").lower() == "true"
         
@@ -71,7 +78,10 @@ class EmailSender:
         # Get current date and time for the report
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Create email HTML content
+        # Get sender name for visibility in content
+        sender_name = self.sender_name or "AEM Forms Scraper"
+        
+        # Create email HTML content - matching the structure of the working email
         html = f"""
         <html>
             <head>
@@ -80,28 +90,20 @@ class EmailSender:
                     .container {{ max-width: 800px; margin: 0 auto; padding: 20px; }}
                     h1 {{ color: #1473E6; }} /* Adobe blue */
                     h2 {{ color: #505050; border-bottom: 1px solid #ddd; padding-bottom: 5px; }}
-                    .question {{ margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }}
-                    .question h3 {{ margin-top: 0; margin-bottom: 10px; }}
                     .question-link {{ color: #1473E6; text-decoration: none; }}
                     .question-link:hover {{ text-decoration: underline; }}
-                    .meta {{ color: #777; font-size: 0.9em; margin-bottom: 10px; }}
-                    .topics {{ margin-top: 10px; }}
-                    .topic {{ display: inline-block; background: #F5F5F5; padding: 3px 8px; margin-right: 5px; 
-                             border-radius: 3px; font-size: 0.8em; color: #555; }}
-                    .stats {{ color: #777; font-size: 0.9em; margin-top: 10px; }}
+                    table {{ border-collapse: collapse; width: 100%; }}
+                    th {{ background-color: #f2f2f2; text-align: left; padding: 8px; border: 1px solid #ddd; }}
+                    td {{ padding: 8px; border: 1px solid #ddd; }}
+                    tr:nth-child(even) {{ background-color: #f9f9f9; }}
                     .footer {{ margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.8em; color: #777; }}
-                    .summary {{ background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
                 </style>
             </head>
             <body>
                 <div class="container">
                     <h1>AEM Forms Unanswered Questions Report</h1>
                     <p>Report generated on: {now}</p>
-                    
-                    <div class="summary">
-                        <h2>Summary</h2>
-                        <p>Found {len(questions)} unanswered questions since {start_date}</p>
-                    </div>
+                    <p>Found {len(questions)} unanswered questions since {start_date}</p>
         """
         
         if not questions:
@@ -111,51 +113,37 @@ class EmailSender:
         else:
             html += """
                     <h2>Questions</h2>
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Date</th>
+                        </tr>
             """
             
             # Add each question to the email
             for question in questions:
+                question_id = question.get("id", "N/A")
                 title = question.get("title", "Untitled Question")
                 url = question.get("url", "#")
                 author = question.get("author", "Unknown Author")
                 date = question.get("date", "Unknown Date")
-                content = question.get("content", "No content available")
-                topics = question.get("topics", [])
-                views = question.get("views", 0)
-                likes = question.get("likes", 0)
-                replies = question.get("replies", 0)
                 
                 html += f"""
-                    <div class="question">
-                        <h3><a class="question-link" href="{url}">{title}</a></h3>
-                        <div class="meta">
-                            Posted by: {author} | Date: {date}
-                        </div>
-                        <div>
-                            {content[:300]}{'...' if len(content) > 300 else ''}
-                        </div>
+                        <tr>
+                            <td>{question_id}</td>
+                            <td><a class="question-link" href="{url}">{title}</a></td>
+                            <td>{author}</td>
+                            <td>{date}</td>
+                        </tr>
                 """
-                
-                if topics:
-                    html += """
-                        <div class="topics">
-                    """
-                    for topic in topics:
-                        html += f"""
-                            <span class="topic">{topic}</span>
-                        """
-                    html += """
-                        </div>
-                    """
-                
-                html += f"""
-                        <div class="stats">
-                            Views: {views} | Likes: {likes} | Replies: {replies}
-                        </div>
-                    </div>
-                """
+            
+            html += """
+                    </table>
+            """
         
-        # Add footer
+        # Add footer matching the structure of the working email
         html += """
                     <div class="footer">
                         <p>This is an automated report from the AEM Forms Question Scraper.</p>
@@ -193,26 +181,82 @@ class EmailSender:
             logging.error("Missing required email settings")
             return False
             
-        # Create the email
-        msg = MIMEMultipart()
-        msg["Subject"] = f"AEM Forms Unanswered Questions Report ({len(questions)} questions)"
+        # Create a simpler email with both plain text and HTML parts
+        msg = MIMEMultipart("alternative")
         
-        # Format sender with name if available
-        if self.sender_name:
-            msg["From"] = f"{self.sender_name} <{self.sender_email}>"
-        else:
-            msg["From"] = self.sender_email
+        # Get sender information
+        from_name = self.sender_name or "AEM Forms Scraper"
+        from_address = self.display_from or self.sender_email
+        
+        # Create dynamic subject line to help prevent spam filtering
+        current_date = datetime.now().strftime("%m%d")
+        
+        # Add a random element - first create a hash of the timestamp
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        random_hash = hashlib.md5(timestamp.encode()).hexdigest()[:5]
+        
+        # Format: "AEM Forms Forums: Unanswered Questions (count) [date-hash]"
+        subject = f"AEM Forms Forums: Unanswered Questions ({len(questions)}) [{current_date}-{random_hash}]"
+        msg["Subject"] = subject
+        logging.info(f"Using dynamic subject: {subject}")
+        
+        # Use display_from parameter for visible From address
+        msg["From"] = f"{from_name} <{from_address}>"
+        
+        # Add sender identification to ensure visibility
+        msg["Sender"] = f"{from_name} <{from_address}>"
+        
+        # Adobe-specific header that might help
+        if "adobe.com" in self.smtp_server:
+            msg["X-Adobe-Sender"] = self.sender_email
+            
+        # Create return-path for reply chain
+        msg["Return-Path"] = self.sender_email
         
         # Add recipients
         if to_recipients:
             msg["To"] = ", ".join(to_recipients)
         if self.cc_recipients:
             msg["Cc"] = ", ".join(self.cc_recipients)
-        # Note: BCC is not added to headers but to the recipients list when sending
+        
+        # Set reply-to
+        msg["Reply-To"] = self.sender_email
+        
+        # Create minimal headers for corporate email
+        msg["Date"] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z")
+        msg["Message-ID"] = f"<aemforms{datetime.now().strftime('%Y%m%d%H%M%S')}@{self.smtp_server.split('.')[0]}>"
+        
+        # Create plain text version first (will be shown if HTML fails)
+        plain_text = f"""
+FROM: {from_name}
+SUBJECT: AEM Forms Forums: Unanswered Questions
+
+Report Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+Questions Since: {start_date}
+Questions Found: {len(questions)}
+Report ID: {random_hash}
+
+"""
+        # Add questions to plain text if there are any
+        if questions:
+            plain_text += "QUESTIONS:\n\n"
+            for idx, question in enumerate(questions, 1):
+                title = question.get("title", "Untitled Question")
+                url = question.get("url", "#")
+                author = question.get("author", "Unknown Author")
+                date = question.get("date", "Unknown Date")
+                plain_text += f"{idx}. {title}\n   By: {author} on {date}\n   URL: {url}\n\n"
+                
+        plain_text += "This is an automated report from the AEM Forms Question Scraper."
+        
+        # Attach plain text part first (fallback)
+        text_part = MIMEText(plain_text, "plain")
+        msg.attach(text_part)
         
         # Create HTML email content
         html_content = self.create_email_html(questions, start_date)
-        msg.attach(MIMEText(html_content, "html"))
+        html_part = MIMEText(html_content, "html")
+        msg.attach(html_part)
         
         try:
             # Combine all recipients for sending
@@ -231,19 +275,12 @@ class EmailSender:
                 
             # Login and send email
             server.login(self.sender_email, self.password)
+            
+            # Simple send - avoiding complex customizations that might trigger spam
             server.send_message(msg, from_addr=self.sender_email, to_addrs=all_recipients)
             server.quit()
             
-            # Log which types of recipients were used
-            recipient_info = []
-            if to_recipients:
-                recipient_info.append(f"{len(to_recipients)} TO recipients")
-            if self.cc_recipients:
-                recipient_info.append(f"{len(self.cc_recipients)} CC recipients")
-            if self.bcc_recipients:
-                recipient_info.append(f"{len(self.bcc_recipients)} BCC recipients")
-                
-            logging.info(f"Email sent successfully to {', '.join(recipient_info)}")
+            logging.info(f"Email sent successfully to {len(all_recipients)} recipients")
             return True
             
         except Exception as e:

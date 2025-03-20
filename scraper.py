@@ -206,7 +206,8 @@ def cleanup_html_files():
                 logging.warning(f"Failed to remove {file}: {e}")
 
 def send_email_report(questions, start_date, recipient_email=None, smtp_server=None, smtp_port=None, 
-                     sender_email=None, sender_name=None, password=None, use_ssl=False):
+                     sender_email=None, sender_name=None, display_from=None, password=None, use_ssl=False,
+                     debug_email=False):
     """Send an email report with the scraped questions."""
     try:
         # Import here to make email optional
@@ -217,18 +218,30 @@ def send_email_report(questions, start_date, recipient_email=None, smtp_server=N
         else:
             logging.info("Sending email report to default recipients")
         
+        # Set more verbose logging for email debugging
+        if debug_email:
+            logger = logging.getLogger()
+            original_level = logger.level
+            logger.setLevel(logging.DEBUG)
+            logging.debug("Email debugging enabled - verbose logging active")
+        
         # Initialize email sender
         sender = EmailSender(
             smtp_server=smtp_server,
             smtp_port=smtp_port,
             sender_email=sender_email,
             sender_name=sender_name,
+            display_from=display_from,
             password=password,
             use_ssl=use_ssl
         )
         
         # Send the email
         success = sender.send_email(recipient_email, questions, start_date)
+        
+        # Reset logging level if it was changed
+        if debug_email:
+            logger.setLevel(original_level)
         
         if success:
             logging.info("Email report sent successfully")
@@ -267,9 +280,11 @@ def main():
     email_group.add_argument("--smtp-port", type=int, help="SMTP server port (or set AEM_SMTP_PORT env var)")
     email_group.add_argument("--sender-email", help="Sender email address (or set AEM_SENDER_EMAIL env var)")
     email_group.add_argument("--sender-name", help="Sender name (or set AEM_SENDER_NAME env var)")
+    email_group.add_argument("--display-from", help="Display From address for email clients like Outlook (or set AEM_DISPLAY_FROM env var)")
     email_group.add_argument("--email-password", help="Email password (or set AEM_EMAIL_PASSWORD env var)")
     email_group.add_argument("--use-ssl", action="store_true", help="Use SSL instead of TLS (or set AEM_USE_SSL=true)")
     email_group.add_argument("--skip-email", action="store_true", help="Skip sending email even if --email is provided")
+    email_group.add_argument("--debug-email", action="store_true", help="Enable detailed email debugging")
     
     args = parser.parse_args()
     
@@ -310,8 +325,10 @@ def main():
             smtp_port=args.smtp_port,
             sender_email=args.sender_email,
             sender_name=args.sender_name,
+            display_from=args.display_from,
             password=args.email_password,
-            use_ssl=args.use_ssl
+            use_ssl=args.use_ssl,
+            debug_email=args.debug_email
         )
     
     # Clean up temporary files
