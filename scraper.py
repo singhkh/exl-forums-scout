@@ -258,6 +258,38 @@ def send_email_report(questions, start_date, recipient_email=None, smtp_server=N
         logging.error(f"Error sending email: {e}")
         return False
 
+def send_slack_notification(questions, start_date, slack_token=None, slack_channel=None):
+    """Send a Slack notification with the scraped questions."""
+    try:
+        # Import here to make slack optional
+        from slack_sender import SlackSender
+        
+        logging.info(f"Sending Slack notification to #{slack_channel or 'default channel'}")
+        
+        # Initialize Slack sender
+        sender = SlackSender(
+            token=slack_token,
+            channel=slack_channel
+        )
+        
+        # Send the notification
+        success = sender.send_notification(questions, start_date)
+        
+        if success:
+            logging.info("Slack notification sent successfully")
+        else:
+            logging.error("Failed to send Slack notification")
+            
+        return success
+    
+    except ImportError:
+        logging.error("Slack module not found. Make sure slack_sender.py is in the same directory.")
+        return False
+    
+    except Exception as e:
+        logging.error(f"Error sending Slack notification: {e}")
+        return False
+
 def main():
     """Main function to parse arguments and run the scraper."""
     parser = argparse.ArgumentParser(description="Scrape questions from Adobe Experience League forums")
@@ -285,6 +317,13 @@ def main():
     email_group.add_argument("--use-ssl", action="store_true", help="Use SSL instead of TLS (or set AEM_USE_SSL=true)")
     email_group.add_argument("--skip-email", action="store_true", help="Skip sending email even if --email is provided")
     email_group.add_argument("--debug-email", action="store_true", help="Enable detailed email debugging")
+    
+    # Slack arguments
+    slack_group = parser.add_argument_group("Slack Options")
+    slack_group.add_argument("--slack", action="store_true", help="Send Slack notification (or set AEM_SLACK_ENABLED=true)")
+    slack_group.add_argument("--slack-token", help="Slack Bot User OAuth Token (or set AEM_SLACK_TOKEN env var)")
+    slack_group.add_argument("--slack-channel", help="Slack channel to send notification to (or set AEM_SLACK_CHANNEL env var)")
+    slack_group.add_argument("--skip-slack", action="store_true", help="Skip sending Slack notification even if Slack is enabled")
     
     args = parser.parse_args()
     
@@ -329,6 +368,16 @@ def main():
             password=args.email_password,
             use_ssl=args.use_ssl,
             debug_email=args.debug_email
+        )
+    
+    # Send Slack notification if requested and not skipped
+    slack_enabled = args.slack or os.environ.get('AEM_SLACK_ENABLED', '').lower() == 'true'
+    if slack_enabled and not args.skip_slack:
+        send_slack_notification(
+            questions=questions,
+            start_date=args.start_date,
+            slack_token=args.slack_token,
+            slack_channel=args.slack_channel
         )
     
     # Clean up temporary files

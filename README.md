@@ -192,3 +192,31 @@ Then schedule this batch file to run at your desired interval using Windows Task
 ## License
 
 MIT 
+
+## Security and Sensitive Information
+
+This project uses environment variables to handle sensitive information like email credentials and Slack tokens.
+
+### Setup for Development
+
+1. Copy `.env.template` to `.env` in your local directory:
+   ```bash
+   cp .env.template .env
+   ```
+
+2. Edit the `.env` file with your actual credentials:
+   ```
+   AEM_SENDER_EMAIL=your-actual-email@company.com
+   AEM_SMTP_SERVER=your-actual-smtp-server
+   AEM_EMAIL_PASSWORD=your-actual-password
+   AEM_SLACK_TOKEN=your-actual-slack-token
+   ```
+
+3. The `.env` file is included in `.gitignore` to prevent committing sensitive information.
+
+### Important Security Notes
+
+- **NEVER** commit your `.env` file with actual credentials
+- **NEVER** hardcode credentials in the Python files
+- Use the `.env.template` as a reference for required environment variables
+- For CI/CD pipelines, use secret management features of your platform 
