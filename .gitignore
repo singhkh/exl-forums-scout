@@ -41,3 +41,9 @@ debug_email.eml
 # Log files
 *.log
 logs/
+Blog/before-after.png
+Blog/blog_post.md
+Blog/evolution-of-forum-support.png
+Blog/forum-scraper-workflow.png
+Blog/manual-nudge-process.png
+Blog/simple-diagram.svg
