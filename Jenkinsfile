@@ -15,13 +15,11 @@ pipeline {
         stage('Setup') {
             steps {
                 sh '''
-                    # Display Python version and location
-                    which python3 || echo "Python3 not found"
+                    # Try to upgrade pip first
+                    python3 -m pip install --upgrade pip --user || true
                     
-                    # Try installing requirements with python3 -m pip
-                    python3 -m pip install -r requirements.txt || \
-                    /usr/bin/python3 -m pip install -r requirements.txt || \
-                    /usr/local/bin/python3 -m pip install -r requirements.txt
+                    # Install dependencies with trusted hosts
+                    python3 -m pip install -r requirements.txt --user --trusted-host pypi.org --trusted-host files.pythonhosted.org
                 '''
             }
         }
