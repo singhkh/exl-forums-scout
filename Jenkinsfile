@@ -44,10 +44,13 @@ pipeline {
                     def daysAgo = params.DAYS_AGO
                     def maxPages = params.MAX_PAGES
                     
-                    // For Mac/Linux
+                    // For Linux date command
                     sh """
+                        # Calculate date in YYYY-MM-DD format using Linux date command
+                        start_date=\$(date -d "${daysAgo} days ago" +%Y-%m-%d)
+                        
                         python3 scraper.py \
-                            --start-date \$(date -v -${daysAgo}d +%Y-%m-%d) \
+                            --start-date \$start_date \
                             --output questions_${timestamp}.json \
                             --max-pages ${maxPages} \
                             --headless \
