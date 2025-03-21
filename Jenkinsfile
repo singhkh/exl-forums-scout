@@ -14,7 +14,15 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                    # Display Python version and location
+                    which python3 || echo "Python3 not found"
+                    
+                    # Try installing requirements with python3 -m pip
+                    python3 -m pip install -r requirements.txt || \
+                    /usr/bin/python3 -m pip install -r requirements.txt || \
+                    /usr/local/bin/python3 -m pip install -r requirements.txt
+                '''
             }
         }
         
@@ -40,7 +48,7 @@ pipeline {
                     
                     // For Mac/Linux
                     sh """
-                        python scraper.py \
+                        python3 scraper.py \
                             --start-date \$(date -v -${daysAgo}d +%Y-%m-%d) \
                             --output questions_${timestamp}.json \
                             --max-pages ${maxPages} \
