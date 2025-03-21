@@ -35,15 +35,64 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the scraper with the following command:
+### Basic Usage
+
+Run the scraper with the minimal required options:
+
+```bash
+python scraper.py --start-date 2023-01-01
+```
+
+This will scrape 10 pages of questions from January 1, 2023, and save them to `questions.json`.
+
+### Common Options
+
+Customize output file and number of pages:
+
+```bash
+python scraper.py --start-date 2023-01-01 --output aem_questions.json --max-pages 20
+```
+
+### Debugging
+
+Enable debug mode to save HTML files for inspection:
+
+```bash
+# Save and keep HTML files for debugging
+python scraper.py --start-date 2023-01-01 --debug --keep-html
+
+# Only clean up HTML files from previous runs
+python scraper.py --cleanup
+```
+
+### Email Notifications
+
+Send email reports after scraping:
+
+```bash
+# Basic email with command line parameters
+python scraper.py --start-date 2023-01-01 --email user@example.com --smtp-server smtp.gmail.com --sender-email sender@gmail.com --email-password mypassword
+
+# Using SSL instead of TLS
+python scraper.py --start-date 2023-01-01 --email user@example.com --use-ssl
+
+# Using environment variables for SMTP settings
+python scraper.py --start-date 2023-01-01 --email user@example.com
+```
+
+### Full Command Reference
 
 ```bash
 python scraper.py --start-date YYYY-MM-DD [--output FILENAME] [--max-pages N] [--debug] [--keep-html] [--cleanup]
+                  [--email EMAIL] [--smtp-server SERVER] [--smtp-port PORT] 
+                  [--sender-email EMAIL] [--sender-name NAME] [--email-password PASSWORD]
+                  [--use-ssl] [--skip-email]
 ```
 
 ### Arguments:
 
 #### Scraping Options:
+
 - `--start-date`: Only include questions posted after this date (required, format: YYYY-MM-DD)
 - `--output`: Output JSON file name (default: questions.json)
 - `--max-pages`: Maximum number of pages to scrape (default: 10)
@@ -52,6 +101,7 @@ python scraper.py --start-date YYYY-MM-DD [--output FILENAME] [--max-pages N] [-
 - `--cleanup`: Only clean up HTML files from previous runs without scraping
 
 #### Email Options:
+
 - `--email`: Send email report to this address (optional if default recipients configured)
 - `--smtp-server`: SMTP server address (or set AEM_SMTP_SERVER env var)
 - `--smtp-port`: SMTP server port (or set AEM_SMTP_PORT env var)
@@ -60,34 +110,6 @@ python scraper.py --start-date YYYY-MM-DD [--output FILENAME] [--max-pages N] [-
 - `--email-password`: Email password (or set AEM_EMAIL_PASSWORD env var)
 - `--use-ssl`: Use SSL instead of TLS (or set AEM_USE_SSL=true)
 - `--skip-email`: Skip sending email even if --email is provided
-
-### Examples:
-
-```bash
-# Basic usage
-python scraper.py --start-date 2023-01-01 --output aem_questions.json
-
-# Debug mode with kept HTML files
-python scraper.py --start-date 2023-01-01 --debug --keep-html
-
-# Only clean up existing HTML files without scraping
-python scraper.py --cleanup
-
-# Scrape and send email report
-python scraper.py --start-date 2023-01-01 --email user@example.com --smtp-server smtp.gmail.com --sender-email sender@gmail.com --email-password mypassword
-
-# Scrape and send email report using SSL
-python scraper.py --start-date 2023-01-01 --email user@example.com --smtp-server smtp.gmail.com --sender-email sender@gmail.com --email-password mypassword --use-ssl
-
-# Scrape and send email report using environment variables for SMTP settings
-export AEM_SMTP_SERVER=smtp.gmail.com
-export AEM_SENDER_EMAIL=sender@gmail.com
-export AEM_EMAIL_PASSWORD=mypassword
-python scraper.py --start-date 2023-01-01 --email user@example.com
-
-# Scrape and send email report with sender name
-python scraper.py --start-date 2023-01-01 --email user@example.com --sender-name "AEM Scraper Bot" --sender-email sender@gmail.com
-```
 
 ## Email Configuration
 
@@ -220,3 +242,26 @@ This project uses environment variables to handle sensitive information like ema
 - **NEVER** hardcode credentials in the Python files
 - Use the `.env.template` as a reference for required environment variables
 - For CI/CD pipelines, use secret management features of your platform 
+
+## Jenkins Deployment
+
+The project includes a Jenkinsfile for easy deployment to Jenkins. To deploy to Jenkins:
+
+1. Ensure your code is in a Git repository accessible by Jenkins.
+
+2. In Jenkins:
+   - Create a new Pipeline job
+   - Configure "Pipeline script from SCM" and select your Git repository
+   - Keep "Script Path" as "Jenkinsfile"
+
+3. The pipeline accepts these parameters:
+   - `START_DATE`: Date to start scraping from (format: YYYY-MM-DD, default: 2023-01-01)
+   - `MAX_PAGES`: Maximum number of pages to scrape (default: 20)
+
+4. Environment variables:
+   - Add all required environment variables from `.env.template` as parameters in Jenkins
+   - All variables starting with `AEM_` will be included in the .env file during execution
+
+5. Run the job:
+   - Click "Build with Parameters" to customize the run
+   - The pipeline will install dependencies, run the scraper, and archive the results 
