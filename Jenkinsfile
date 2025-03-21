@@ -18,6 +18,19 @@ pipeline {
             }
         }
         
+        stage('Setup Environment') {
+            steps {
+                script {
+                    // Create .env file from Jenkins environment variables
+                    sh '''
+                        # Create .env file from job parameters
+                        env | grep "AEM_" > .env
+                        cat .env
+                    '''
+                }
+            }
+        }
+        
         stage('Run Scraper') {
             steps {
                 script {
