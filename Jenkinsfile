@@ -52,9 +52,7 @@ pipeline {
                         python3 scraper.py \
                             --start-date \$start_date \
                             --output questions_${timestamp}.json \
-                            --max-pages ${maxPages} \
-                            --headless \
-                            --verbose
+                            --max-pages ${maxPages}
                     """
                 }
             }
