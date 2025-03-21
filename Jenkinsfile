@@ -7,7 +7,7 @@ pipeline {
     }
     
     parameters {
-        string(name: 'DAYS_AGO', defaultValue: '7', description: 'How many days back to scrape questions')
+        string(name: 'START_DATE', defaultValue: '2023-01-01', description: 'Start date for scraping questions (YYYY-MM-DD)')
         string(name: 'MAX_PAGES', defaultValue: '20', description: 'Maximum number of pages to scrape')
     }
     
@@ -41,16 +41,12 @@ pipeline {
             steps {
                 script {
                     def timestamp = new Date().format('yyyyMMdd_HHmmss')
-                    def daysAgo = params.DAYS_AGO
+                    def startDate = params.START_DATE
                     def maxPages = params.MAX_PAGES
                     
-                    // For Linux date command
                     sh """
-                        # Calculate date in YYYY-MM-DD format using Linux date command
-                        start_date=\$(date -d "${daysAgo} days ago" +%Y-%m-%d)
-                        
                         python3 scraper.py \
-                            --start-date \$start_date \
+                            --start-date ${startDate} \
                             --output questions_${timestamp}.json \
                             --max-pages ${maxPages}
                     """
