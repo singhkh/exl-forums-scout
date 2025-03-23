@@ -30,7 +30,7 @@ class EmailSender:
             self.smtp_port = 465 if use_ssl else 587
             
         self.sender_email = sender_email or os.environ.get("AEM_SENDER_EMAIL")
-        self.sender_name = sender_name or os.environ.get("AEM_SENDER_NAME", "AEM Forms Scraper")
+        self.sender_name = sender_name or os.environ.get("AEM_SENDER_NAME", "Adobe Experience League Forums Scout")
         
         # Display From can be different from sender email (useful for corporate relays)
         self.display_from = display_from or os.environ.get("AEM_DISPLAY_FROM", self.sender_email)
@@ -79,7 +79,7 @@ class EmailSender:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Get sender name for visibility in content
-        sender_name = self.sender_name or "AEM Forms Scraper"
+        sender_name = self.sender_name or "Adobe Experience League Forums Scout"
         
         # Create email HTML content - matching the structure of the working email
         html = f"""
@@ -185,7 +185,7 @@ class EmailSender:
         msg = MIMEMultipart("alternative")
         
         # Get sender information
-        from_name = self.sender_name or "AEM Forms Scraper"
+        from_name = self.sender_name or "Adobe Experience League Forums Scout"
         from_address = self.display_from or self.sender_email
         
         # Create dynamic subject line to help prevent spam filtering

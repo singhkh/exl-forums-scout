@@ -41,3 +41,42 @@ debug_email.eml
 # Log files
 *.log
 logs/
+<<<<<<< Updated upstream
+=======
+Blog/before-after.png
+Blog/blog_post.md
+Blog/evolution-of-forum-support.png
+Blog/forum-scraper-workflow.png
+Blog/manual-nudge-process.png
+Blog/simple-diagram.svg
+aem_env/lib/python3.12/site-packages/requests/utils.py
+aem_env/lib/python3.12/site-packages/requests/status_codes.py
+aem_env/lib/python3.12/site-packages/requests/sessions.py
+aem_env/lib/python3.12/site-packages/requests/packages.py
+aem_env/lib/python3.12/site-packages/requests/models.py
+aem_env/lib/python3.12/site-packages/requests/exceptions.py
+aem_env/lib/python3.12/site-packages/requests/cookies.py
+aem_env/lib/python3.12/site-packages/requests/compat.py
+aem_env/lib/python3.12/site-packages/requests/auth.py
+aem_env/lib/python3.12/site-packages/requests/api.py
+aem_env/lib/python3.12/site-packages/requests/adapters.py
+aem_env/lib/python3.12/site-packages/requests/__version__.py
+aem_env/lib/python3.12/site-packages/requests/__init__.py
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/WHEEL
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/top_level.txt
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/REQUESTED
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/RECORD
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/METADATA
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/LICENSE
+aem_env/lib/python3.12/site-packages/requests-2.31.0.dist-info/INSTALLER
+aem_env/bin/undill
+aem_env/bin/tqdm
+aem_env/bin/ppserver
+aem_env/bin/pox
+aem_env/bin/portpicker
+aem_env/bin/pathos_connect
+aem_env/bin/numpy-config
+aem_env/bin/get_objgraph
+aem_env/bin/get_gprof
+aem_env/bin/f2py
+>>>>>>> Stashed changes
