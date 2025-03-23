@@ -37,26 +37,20 @@ pip install -r requirements.txt
 
 ### Basic Usage
 
-Run the scraper with minimal options:
-
-```bash
-python scraper.py
-```
-
-This will scrape 10 pages of questions starting from December 1st of the previous year, and save them to `questions.json`.
-
-You can specify a custom start date:
+Run the scraper with the minimal required options:
 
 ```bash
 python scraper.py --start-date 2023-01-01
 ```
+
+This will scrape 10 pages of questions from January 1, 2023, and save them to `questions.json`.
 
 ### Common Options
 
 Customize output file and number of pages:
 
 ```bash
-python scraper.py --output aem_questions.json --max-pages 20
+python scraper.py --start-date 2023-01-01 --output aem_questions.json --max-pages 20
 ```
 
 ### Debugging
@@ -89,7 +83,7 @@ python scraper.py --start-date 2023-01-01 --email user@example.com
 ### Full Command Reference
 
 ```bash
-python scraper.py [--start-date YYYY-MM-DD] [--output FILENAME] [--max-pages N] [--debug] [--keep-html] [--cleanup]
+python scraper.py --start-date YYYY-MM-DD [--output FILENAME] [--max-pages N] [--debug] [--keep-html] [--cleanup]
                   [--email EMAIL] [--smtp-server SERVER] [--smtp-port PORT] 
                   [--sender-email EMAIL] [--sender-name NAME] [--email-password PASSWORD]
                   [--use-ssl] [--skip-email]
@@ -99,7 +93,7 @@ python scraper.py [--start-date YYYY-MM-DD] [--output FILENAME] [--max-pages N] 
 
 #### Scraping Options:
 
-- `--start-date`: Only include questions posted after this date (format: YYYY-MM-DD, default: December 1st of previous year)
+- `--start-date`: Only include questions posted after this date (required, format: YYYY-MM-DD)
 - `--output`: Output JSON file name (default: questions.json)
 - `--max-pages`: Maximum number of pages to scrape (default: 10)
 - `--debug`: Enable debug mode (saves downloaded HTML to files)

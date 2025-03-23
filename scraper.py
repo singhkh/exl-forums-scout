@@ -299,7 +299,7 @@ def main():
     group.add_argument("--cleanup", action="store_true", help="Clean up HTML files from previous runs without scraping")
     
     # Scraping arguments
-    parser.add_argument("--start-date", help="Start date in YYYY-MM-DD format (default: December 1st of previous year)")
+    parser.add_argument("--start-date", help="Start date in YYYY-MM-DD format")
     parser.add_argument("--output", default="questions.json", help="Output file name")
     parser.add_argument("--max-pages", type=int, default=10, help="Maximum number of pages to scrape")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
@@ -332,12 +332,9 @@ def main():
         cleanup_html_files()
         return
     
-    # Set default start date to December 1 of last year if not specified
+    # Validate start date for scraping
     if not args.start_date:
-        current_year = datetime.now().year
-        previous_year = current_year - 1
-        args.start_date = f"{previous_year}-12-01"
-        logging.info(f"No start date specified. Using default: {args.start_date}")
+        parser.error("--start-date is required when scraping")
     
     logging.info(f"Scraping questions after {args.start_date}")
     logging.info(f"Maximum pages to scrape: {args.max_pages}")
