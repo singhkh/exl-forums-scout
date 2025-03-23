@@ -11,6 +11,8 @@ This utility scrapes unanswered questions from the Adobe Experience Manager Form
 - Saves results to a JSON file
 - Automatically cleans up temporary files
 - Sends email reports with formatted question listings
+- AI-powered categorization of questions using Adobe's GenAI services
+- Slack notifications with targeted channel and manager tagging
 
 ## Requirements
 
@@ -232,6 +234,8 @@ This project uses environment variables to handle sensitive information like ema
    AEM_SMTP_SERVER=your-actual-smtp-server
    AEM_EMAIL_PASSWORD=your-actual-password
    AEM_SLACK_TOKEN=your-actual-slack-token
+   ADOBE_FIREFALL_CLIENT_ID=your-client-id
+   ADOBE_FIREFALL_CLIENT_SECRET=your-client-secret
    ```
 
 3. The `.env` file is included in `.gitignore` to prevent committing sensitive information.
@@ -265,3 +269,112 @@ The project includes a Jenkinsfile for easy deployment to Jenkins. To deploy to 
 5. Run the job:
    - Click "Build with Parameters" to customize the run
    - The pipeline will install dependencies, run the scraper, and archive the results 
+
+## Slack Integration
+
+Send notifications to Slack channels:
+
+```bash
+# Send notifications to Slack
+python scraper.py --start-date 2023-01-01 --slack
+
+# Skip email but send to Slack
+python scraper.py --start-date 2023-01-01 --skip-email --slack
+
+# Enable debug mode with detailed logging
+python scraper.py --start-date 2023-01-01 --slack --debug
+```
+
+### Manager Configuration
+
+The system supports assigning specific managers to each category. When questions are sent to Slack, the appropriate managers are automatically tagged. To configure managers:
+
+1. Edit the `.env` file to specify managers for each category:
+   ```
+   # Manager Configurations
+   MANAGER_ADAPTIVE_FORMS_AUTHORING=@manager1,@manager2,@manager3
+   MANAGER_ADAPTIVE_FORMS_RUNTIME=@manager4,@manager3
+   MANAGER_DESIGNER=@manager5,@manager3
+   MANAGER_DEFAULT=@manager1,@manager2,@manager3,@manager4,@manager5
+   ```
+
+2. Each manager will only be tagged on questions relevant to their expertise
+3. The MANAGER_DEFAULT is used for categories without specific manager assignments
+
+### Enhanced Reporting
+
+The command-line output includes detailed reports on:
+
+1. **Distribution by Category**: Shows questions per category with their assigned managers
+2. **Distribution by Channel**: Shows which Slack channels received messages and how many
+3. **Distribution by Manager**: Shows which managers were tagged and how many times
+4. **Summary Statistics**: Total questions processed, categories found, and sending timestamp
+
+## AI Categorization
+
+The scraper includes an AI-powered categorization system that analyzes question content and automatically assigns each question to the most appropriate category or subcategory.
+
+### How AI Categorization Works
+
+1. Each question's title, content, and topics are analyzed using Adobe's GenAI services or an integrated LLM
+2. The AI assigns a category and confidence score to each question
+3. Questions are routed to appropriate Slack channels based on their categories
+4. Relevant managers are automatically tagged based on category expertise
+5. A robust rule-based fallback system ensures categorization works even if AI services are unavailable
+
+### Subcategory Support
+
+The system supports detailed subcategories for more granular categorization:
+
+1. Each main category can have multiple subcategories
+2. Subcategories inherit their parent category's channel configuration
+3. Subcategories can have their own specific manager assignments
+4. Detailed reports show question distribution at the subcategory level
+
+For example:
+```
+CATEGORY: adaptive-forms-authoring
+SUBCATEGORIES:
+  - form-structure (for questions about panel hierarchies, sections, etc.)
+  - form-fields (for questions about specific input components)
+  - styling (for questions about CSS, theming, or visual appearance)
+```
+
+### Testing AI Categorization
+
+To test the AI categorization functionality:
+
+```bash
+# Run the test script
+python test_categorization.py
+
+# Results are saved to categorization_results.json
+```
+
+### Configuring AI Categorization
+
+AI categorization requires Adobe Firefall client credentials:
+
+1. Add your credentials to the `.env` file:
+   ```
+   ADOBE_FIREFALL_CLIENT_ID=your-client-id
+   ADOBE_FIREFALL_CLIENT_SECRET=your-client-secret
+   ```
+
+2. For Adobe internal use, you'll also need Artifactory credentials:
+   ```
+   ARTIFACTORY_USER=your-artifactory-username
+   ARTIFACTORY_API_TOKEN=your-artifactory-api-token
+   ```
+
+3. For detailed setup of Adobe's internal LLM access, refer to `AI_CATEGORIZATION_SETUP.md`
+
+### Rule-Based Fallback
+
+If AI categorization is unavailable (due to missing credentials or service issues), the system automatically falls back to rule-based categorization:
+
+1. Direct topic matching with predefined categories
+2. Content-based keyword matching using manager expertise areas
+3. Default category assignment for unmatched questions
+
+This ensures the system remains operational even without AI access. 
