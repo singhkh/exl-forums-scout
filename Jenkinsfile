@@ -7,7 +7,7 @@ pipeline {
     }
     
     parameters {
-        string(name: 'START_DATE', defaultValue: '2023-01-01', description: 'Start date for scraping questions (YYYY-MM-DD)')
+        string(name: 'START_DATE', defaultValue: '2024-12-01', description: 'Start date for scraping questions (YYYY-MM-DD)')
         string(name: 'MAX_PAGES', defaultValue: '20', description: 'Maximum number of pages to scrape')
     }
     

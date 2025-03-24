@@ -40,17 +40,17 @@ pip install -r requirements.txt
 Run the scraper with the minimal required options:
 
 ```bash
-python scraper.py --start-date 2023-01-01
+python scraper.py --start-date 2024-12-01
 ```
 
-This will scrape 10 pages of questions from January 1, 2023, and save them to `questions.json`.
+This will scrape 10 pages of questions from December 1, 2024, and save them to `questions.json`.
 
 ### Common Options
 
 Customize output file and number of pages:
 
 ```bash
-python scraper.py --start-date 2023-01-01 --output aem_questions.json --max-pages 20
+python scraper.py --start-date 2024-12-01 --output aem_questions.json --max-pages 20
 ```
 
 ### Debugging
@@ -59,7 +59,7 @@ Enable debug mode to save HTML files for inspection:
 
 ```bash
 # Save and keep HTML files for debugging
-python scraper.py --start-date 2023-01-01 --debug --keep-html
+python scraper.py --start-date 2024-12-01 --debug --keep-html
 
 # Only clean up HTML files from previous runs
 python scraper.py --cleanup
@@ -71,13 +71,13 @@ Send email reports after scraping:
 
 ```bash
 # Basic email with command line parameters
-python scraper.py --start-date 2023-01-01 --email user@example.com --smtp-server smtp.gmail.com --sender-email sender@gmail.com --email-password mypassword
+python scraper.py --start-date 2024-12-01 --email user@example.com --smtp-server smtp.gmail.com --sender-email sender@gmail.com --email-password mypassword
 
 # Using SSL instead of TLS
-python scraper.py --start-date 2023-01-01 --email user@example.com --use-ssl
+python scraper.py --start-date 2024-12-01 --email user@example.com --use-ssl
 
 # Using environment variables for SMTP settings
-python scraper.py --start-date 2023-01-01 --email user@example.com
+python scraper.py --start-date 2024-12-01 --email user@example.com
 ```
 
 ### Full Command Reference
@@ -206,7 +206,7 @@ Create a batch file (run_scraper.bat) with:
 @echo off
 cd /d D:\path\to\aem_scraper
 call aem_env\Scripts\activate
-python scraper.py --start-date 2023-01-01 --email your@email.com
+python scraper.py --start-date 2024-12-01 --email your@email.com
 ```
 
 Then schedule this batch file to run at your desired interval using Windows Task Scheduler.
@@ -255,7 +255,7 @@ The project includes a Jenkinsfile for easy deployment to Jenkins. To deploy to 
    - Keep "Script Path" as "Jenkinsfile"
 
 3. The pipeline accepts these parameters:
-   - `START_DATE`: Date to start scraping from (format: YYYY-MM-DD, default: 2023-01-01)
+   - `START_DATE`: Date to start scraping from (format: YYYY-MM-DD, default: 2024-12-01)
    - `MAX_PAGES`: Maximum number of pages to scrape (default: 20)
 
 4. Environment variables:
