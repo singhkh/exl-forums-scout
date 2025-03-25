@@ -44,12 +44,24 @@ pipeline {
                     def startDate = params.START_DATE
                     def maxPages = params.MAX_PAGES
                     
-                    sh """
-                        python3 scraper.py \
-                            --start-date ${startDate} \
-                            --output questions_${timestamp}.json \
+                    // Build command based on parameters
+                    def scraperCmd = """
+                        python3 scraper.py \\
+                            --output questions_${timestamp}.json \\
                             --max-pages ${maxPages}
                     """
+                    
+                    // Add start date parameter only if provided
+                    if (startDate && !startDate.trim().isEmpty()) {
+                        scraperCmd = """
+                            python3 scraper.py \\
+                                --start-date ${startDate} \\
+                                --output questions_${timestamp}.json \\
+                                --max-pages ${maxPages}
+                        """
+                    }
+                    
+                    sh scraperCmd
                 }
             }
         }
