@@ -15,6 +15,8 @@ import time
 import glob
 from pathlib import Path
 from dotenv import load_dotenv
+from config import ScraperConfig
+from slack_sender import SlackSender
 
 # Load environment variables from .env file if it exists
 env_path = Path('.') / '.env'
@@ -291,17 +293,13 @@ def send_slack_notification(questions, start_date, slack_token=None, slack_chann
         return False
 
 def main():
-    """Main function to parse arguments and run the scraper."""
-    parser = argparse.ArgumentParser(description="Scrape questions from Adobe Experience League forums")
-    
-    # Create a mutually exclusive group for cleanup vs. scraping
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--cleanup", action="store_true", help="Clean up HTML files from previous runs without scraping")
-    
-    # Scraping arguments
-    parser.add_argument("--start-date", help="Start date in YYYY-MM-DD format")
+    """Main entry point for the AEM Forms Question Scraper."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Scrape unanswered questions from AEM Forms forums")
+    parser.add_argument("--start-date", help="Start date for questions in YYYY-MM-DD format")
+    parser.add_argument("--max-pages", type=int, help="Maximum number of pages to scrape")
+    parser.add_argument("--cleanup", action="store_true", help="Clean up HTML files from previous runs without scraping")
     parser.add_argument("--output", default="questions.json", help="Output file name")
-    parser.add_argument("--max-pages", type=int, default=10, help="Maximum number of pages to scrape")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--keep-html", action="store_true", help="Keep HTML files after scraping (only applies in debug mode)")
     
@@ -327,38 +325,46 @@ def main():
     
     args = parser.parse_args()
     
+    # Load configuration
+    config = ScraperConfig()
+    
+    # Use command line args if provided, otherwise use config values
+    start_date = args.start_date or config.start_date
+    max_pages = args.max_pages or config.max_pages
+    
     # Clean up HTML files from previous runs if requested
     if args.cleanup:
         cleanup_html_files()
         return
     
-    # Validate start date for scraping
-    if not args.start_date:
-        parser.error("--start-date is required when scraping")
-    
-    logging.info(f"Scraping questions after {args.start_date}")
-    logging.info(f"Maximum pages to scrape: {args.max_pages}")
+    logging.info(f"Scraping questions after {start_date}")
+    logging.info(f"Maximum pages to scrape: {max_pages}")
     
     # Always clean up HTML files from previous runs first
     cleanup_html_files()
     
     # Run the scraper
-    scraper = ForumScraper(args.start_date, args.max_pages, args.debug, args.keep_html)
+    scraper = ForumScraper(start_date=start_date, max_pages=max_pages, debug=args.debug, keep_html=args.keep_html)
     questions = scraper.scrape()
     
-    logging.info(f"Found {len(questions)} unanswered questions")
-    
-    # Write questions to the output file
-    with open(args.output, "w", encoding="utf-8") as f:
-        json.dump(questions, f, indent=4, ensure_ascii=False)
+    if questions:
+        logging.info(f"Found {len(questions)} questions since {start_date}")
         
-    logging.info(f"Results saved to {args.output}")
+        # Send Slack notifications with categorization
+        slack_sender = SlackSender()
+        slack_sender.send_categorized_notification(questions, start_date)
+        
+        # Save questions to JSON file for reference
+        with open(args.output, "w", encoding="utf-8") as f:
+            json.dump(questions, f, indent=2)
+    else:
+        logging.info("No questions found in the specified time period")
     
     # Send email report if requested and not skipped
     if (args.email or os.environ.get('AEM_DEFAULT_RECIPIENTS')) and not args.skip_email:
         send_email_report(
             questions=questions,
-            start_date=args.start_date,
+            start_date=start_date,
             recipient_email=args.email,
             smtp_server=args.smtp_server,
             smtp_port=args.smtp_port,
@@ -375,7 +381,7 @@ def main():
     if slack_enabled and not args.skip_slack:
         send_slack_notification(
             questions=questions,
-            start_date=args.start_date,
+            start_date=start_date,
             slack_token=args.slack_token,
             slack_channel=args.slack_channel
         )
